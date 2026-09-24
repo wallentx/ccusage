@@ -197,6 +197,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: build-android-arm64
+            os: ubuntu-24.04
+            platform: android
+            arch: arm64
+            binary: rust/target/aarch64-linux-android/release/ccusage
           - name: build-linux-arm64
             os: blacksmith-32vcpu-ubuntu-2404-arm
             platform: linux
@@ -225,6 +230,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/build-android-native-package
+        if: matrix.platform == 'android'
+        with:
+          binary: ${{ matrix.binary }}
       - uses: ./.github/actions/build-linux-native-package
         if: matrix.platform == 'linux'
         with:
@@ -282,7 +291,7 @@ jobs:
         # job is the only thing that runs it, and it never needs to resolve
         # against the workspace. Renovate does not update `dlx` specifiers, so
         # bump the pin here by hand.
-        run: pnpm dlx pkg-pr-new@0.0.75 publish --pnpm --bin './apps/ccusage' './packages/ccusage-linux-arm64' './packages/ccusage-linux-x64' './packages/ccusage-darwin-arm64' './packages/ccusage-darwin-x64' './packages/ccusage-win32-x64'
+        run: pnpm dlx pkg-pr-new@0.0.75 publish --pnpm --bin './apps/ccusage' './packages/ccusage-android-arm64' './packages/ccusage-linux-arm64' './packages/ccusage-linux-x64' './packages/ccusage-darwin-arm64' './packages/ccusage-darwin-x64' './packages/ccusage-win32-x64'
       # Resolve the ccusage CLI preview URL and build the E2E fixture here (this
       # job has the checkout); the E2E jobs then run without a checkout.
       - id: preview-url

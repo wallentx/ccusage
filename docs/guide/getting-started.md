@@ -7,6 +7,8 @@ Welcome to ccusage! This guide will help you get up and running with analyzing y
 - At least one supported coding CLI installed and used
 - Bun 1.3+ recommended for direct execution
 
+On Android ARM64, use a native Android Node.js runtime and run `npx ccusage@latest`. The native binary targets Android 7.0 or later. npm installs it as an optional dependency, so do not disable optional dependencies during installation.
+
 ## Quick Start
 
 The fastest way to try ccusage is to run it directly without installation:

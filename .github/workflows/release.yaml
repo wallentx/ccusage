@@ -56,6 +56,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: build-android-arm64
+            os: ubuntu-24.04
+            platform: android
+            arch: arm64
+            binary: rust/target/aarch64-linux-android/release/ccusage
           - name: build-linux-arm64
             os: blacksmith-32vcpu-ubuntu-2404-arm
             platform: linux
@@ -93,6 +98,10 @@ jobs:
           ref: ${{ needs.tagpr.outputs.tag }}
           fetch-depth: 0
           persist-credentials: false
+      - uses: ./.github/actions/build-android-native-package
+        if: matrix.platform == 'android'
+        with:
+          binary: ${{ matrix.binary }}
       - uses: ./.github/actions/build-linux-native-package
         if: matrix.platform == 'linux'
         with:

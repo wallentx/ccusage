@@ -8,7 +8,7 @@ runs:
   using: composite
   steps:
     - name: Cache Cargo build
-      if: inputs.platform == 'win32'
+      if: inputs.platform == 'win32' || inputs.platform == 'android'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
@@ -18,7 +18,7 @@ runs:
         # The commit sha makes every commit write a fresh entry (actions/cache
         # skips saving on an exact key hit); restore-keys warms from the newest
         # prior entry.
-        key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust/Cargo.lock', 'rust-toolchain.toml') }}-${{ github.sha }}
+        key: cargo-${{ inputs.platform }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust/Cargo.lock', 'rust-toolchain.toml') }}-${{ github.sha }}
         restore-keys: |
-          cargo-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust/Cargo.lock', 'rust-toolchain.toml') }}-
-          cargo-${{ runner.os }}-${{ runner.arch }}-
+          cargo-${{ inputs.platform }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust/Cargo.lock', 'rust-toolchain.toml') }}-
+          cargo-${{ inputs.platform }}-${{ runner.os }}-${{ runner.arch }}-
