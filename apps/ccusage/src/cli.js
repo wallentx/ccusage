@@ -25,6 +25,10 @@ const require = createRequire(import.meta.url);
  * @returns {string | undefined}
  */
 function getNativePackageName(platform = process.platform, arch = process.arch) {
+	if (platform === 'android') {
+		return arch === 'arm64' ? '@ccusage/ccusage-android-arm64' : undefined;
+	}
+
 	if (platform === 'darwin') {
 		if (arch === 'arm64') {
 			return '@ccusage/ccusage-darwin-arm64';

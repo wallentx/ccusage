@@ -193,6 +193,7 @@ in
               const path = require("node:path");
 
               const generatedArtifacts = new Map([
+                ["@ccusage/ccusage-android-arm64", ["bin/ccusage"]],
                 ["@ccusage/ccusage-darwin-arm64", ["bin/ccusage"]],
                 ["@ccusage/ccusage-darwin-x64", ["bin/ccusage"]],
                 ["@ccusage/ccusage-linux-arm64", ["bin/ccusage"]],
