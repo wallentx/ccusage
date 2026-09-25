@@ -29,7 +29,7 @@ jobs:
   # the flake's pinned nixpkgs so CI matches the dev shell.
   tirith-scan:
     name: tirith security scan
-    runs-on: blacksmith-32vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'ccusage/ccusage' && 'blacksmith-32vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
     timeout-minutes: 15
     # Read-only: this job executes PR-controlled code (the local action, the PR
     # flake, the installed tirith), so it must hold no write scopes. The SARIF
@@ -139,7 +139,7 @@ jobs:
   # gate can fail fast before any build/test work starts.
   preflight:
     name: security & lint preflight
-    runs-on: blacksmith-32vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'ccusage/ccusage' && 'blacksmith-32vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
     timeout-minutes: 15
     permissions:
       contents: read
@@ -155,7 +155,7 @@ jobs:
   test:
     needs: [changes, tirith-scan, preflight]
     if: needs.changes.outputs.code-changed == 'true'
-    runs-on: blacksmith-32vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'ccusage/ccusage' && 'blacksmith-32vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -191,7 +191,7 @@ jobs:
     permissions:
       actions: write
       contents: read
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ github.repository == 'ccusage/ccusage' && matrix.os || matrix.public_os || matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -204,26 +204,31 @@ jobs:
             binary: rust/target/aarch64-linux-android/release/ccusage
           - name: build-linux-arm64
             os: blacksmith-32vcpu-ubuntu-2404-arm
+            public_os: ubuntu-24.04-arm
             platform: linux
             arch: arm64
             binary: result/bin/ccusage
           - name: build-linux-x64
             os: blacksmith-32vcpu-ubuntu-2404
+            public_os: ubuntu-24.04
             platform: linux
             arch: x64
             binary: result/bin/ccusage
           - name: build-mac-arm64
             os: blacksmith-12vcpu-macos-26
+            public_os: macos-26
             platform: darwin
             arch: arm64
             binary: result/bin/ccusage
           - name: build-mac-x64
             os: blacksmith-12vcpu-macos-26
+            public_os: macos-26
             platform: darwin
             arch: x64
             binary: result/bin/ccusage
           - name: build-windows-x64
             os: blacksmith-32vcpu-windows-2025
+            public_os: windows-2025
             platform: win32
             arch: x64
             binary: rust/target/release/ccusage.exe
@@ -257,11 +262,11 @@ jobs:
     needs:
       - changes
       - build-native-packages
-    if: needs.changes.outputs.code-changed == 'true'
+    if: github.repository == 'ccusage/ccusage' && (needs.changes.outputs.code-changed == 'true')
     permissions:
       actions: read
       contents: read
-    runs-on: blacksmith-32vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'ccusage/ccusage' && 'blacksmith-32vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
     outputs:
       urls: ${{ steps.publish.outputs.urls }}
       preview-url: ${{ steps.preview-url.outputs.url }}
@@ -287,6 +292,7 @@ jobs:
             tar -xf "$archive"
           done
       - id: publish
+        if: github.repository == 'ccusage/ccusage'
         # Fetched on demand rather than carried as a root devDependency: this
         # job is the only thing that runs it, and it never needs to resolve
         # against the workspace. Renovate does not update `dlx` specifiers, so
@@ -295,6 +301,7 @@ jobs:
       # Resolve the ccusage CLI preview URL and build the E2E fixture here (this
       # job has the checkout); the E2E jobs then run without a checkout.
       - id: preview-url
+        if: github.repository == 'ccusage/ccusage'
         env:
           URLS: ${{ steps.publish.outputs.urls }}
         run: |
@@ -323,7 +330,7 @@ jobs:
     needs:
       - changes
       - npm-publish-dry-run-and-upload-pkg-pr-now
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ github.repository == 'ccusage/ccusage' && matrix.os || matrix.public_os || matrix.os }}
     timeout-minutes: 20
     # No checkout on purpose: the working directory stays empty so each package
     # runner behaves like a real end user instead of inheriting the repo's
@@ -352,6 +359,17 @@ jobs:
         runner:
           - npm
           - pnpm
+        include:
+          - os: blacksmith-32vcpu-ubuntu-2404
+            public_os: ubuntu-24.04
+          - os: blacksmith-32vcpu-ubuntu-2404-arm
+            public_os: ubuntu-24.04-arm
+          - os: blacksmith-12vcpu-macos-26
+            public_os: macos-26
+          - os: macos-15-intel
+            public_os: macos-15-intel
+          - os: blacksmith-32vcpu-windows-2025
+            public_os: windows-2025
 
     steps:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -449,7 +467,7 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
-    runs-on: blacksmith-32vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'ccusage/ccusage' && 'blacksmith-32vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
