@@ -30,6 +30,7 @@
 		"@types/node": "catalog:types"
 	},
 	"optionalDependencies": {
+		"@ccusage/ccusage-android-arm64": "workspace:*",
 		"@ccusage/ccusage-darwin-arm64": "workspace:*",
 		"@ccusage/ccusage-darwin-x64": "workspace:*",
 		"@ccusage/ccusage-linux-arm64": "workspace:*",

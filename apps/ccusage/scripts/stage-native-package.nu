@@ -4,6 +4,7 @@
 use ./native-binary.nu [binary-name, linked-dylibs]
 
 const package_dirs = {
+    android-arm64: 'ccusage-android-arm64'
     darwin-arm64: 'ccusage-darwin-arm64'
     darwin-x64: 'ccusage-darwin-x64'
     linux-arm64: 'ccusage-linux-arm64'

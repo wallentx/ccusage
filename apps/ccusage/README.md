@@ -86,6 +86,8 @@ Use `ccusage daily`, `ccusage weekly`, `ccusage monthly`, or `ccusage session` t
 
 ## Installation
 
+Android ARM64 binaries target Android 7.0 or later. With a native Android Node.js runtime installed, use `npx ccusage@latest`; npm selects the Android native binary automatically.
+
 ### Package Runners
 
 You can run ccusage directly without a global installation:

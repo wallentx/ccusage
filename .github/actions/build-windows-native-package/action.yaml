@@ -16,7 +16,7 @@ runs:
 
     - name: Build Cargo native binary
       shell: bash
-      # Nix cannot target Windows, so this is the one build that downloads the
+      # Nix cannot target Windows, so this build downloads the
       # LiteLLM pricing snapshot instead of reading it from the pinned input.
       run: cargo build --manifest-path rust/Cargo.toml --release --bin ccusage --features fetch-litellm-pricing
 
