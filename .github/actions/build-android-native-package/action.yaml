@@ -1,0 +1,88 @@
+name: Build Android native package
+description: Build, stage, archive, and upload an Android ARM64 ccusage native package
+inputs:
+  binary:
+    description: Path to the built ccusage binary
+    required: true
+runs:
+  using: composite
+  steps:
+    # Cross-compile with Cargo, like the Windows build. Nix's Linux package
+    # targets musl rather than Android's Bionic libc.
+    - name: Install pinned Rust toolchain and Android target
+      shell: bash
+      run: |
+        toolchain=$(sed -n 's/^channel = "\(.*\)"/\1/p' rust-toolchain.toml)
+        test -n "$toolchain"
+        rustup toolchain install "$toolchain" --profile minimal --target aarch64-linux-android
+
+    - name: Configure Android NDK (API 24)
+      shell: bash
+      env:
+        NDK_VERSION: 27.2.12479018
+      run: |
+        ndk="$ANDROID_HOME/ndk/$NDK_VERSION"
+        if [[ ! -d "$ndk" ]]; then
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$NDK_VERSION"
+        fi
+        toolchain="$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin"
+        test -x "$toolchain/aarch64-linux-android24-clang"
+        {
+          echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$toolchain/aarch64-linux-android24-clang"
+          echo "CC_aarch64_linux_android=$toolchain/aarch64-linux-android24-clang"
+          echo "CXX_aarch64_linux_android=$toolchain/aarch64-linux-android24-clang++"
+          echo "AR_aarch64_linux_android=$toolchain/llvm-ar"
+        } >> "$GITHUB_ENV"
+        echo "$toolchain" >> "$GITHUB_PATH"
+
+    - uses: ./.github/actions/setup-native-build-cache
+      with:
+        platform: android
+
+    # Reuse the same pinned snapshot as Nix without compiling the optional
+    # build-time HTTPS client just to fetch a JSON file.
+    - name: Fetch pinned LiteLLM pricing snapshot
+      shell: bash
+      run: |
+        url=$(jq -er '.nodes.litellm.locked | "https://raw.githubusercontent.com/\(.owner)/\(.repo)/\(.rev)/model_prices_and_context_window.json"' flake.lock)
+        snapshot="$RUNNER_TEMP/ccusage-litellm-pricing.json"
+        curl --fail --location --retry 3 --output "$snapshot" "$url"
+        jq -e 'type == "object" and length > 0' "$snapshot" > /dev/null
+        echo "CCUSAGE_PRICING_JSON_PATH=$snapshot" >> "$GITHUB_ENV"
+
+    - name: Build Android native binary
+      shell: bash
+      env:
+        # Support Android devices with either 4 KB or 16 KB memory pages.
+        CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS: -C link-arg=-Wl,-z,max-page-size=16384
+      run: cargo build --locked --manifest-path rust/Cargo.toml --release --bin ccusage --target aarch64-linux-android
+
+    # Cross-built binaries cannot execute on this Linux runner. Verify the
+    # architecture and loader here; run usage reports on Android before release.
+    - name: Verify Android ELF
+      shell: bash
+      env:
+        BINARY: ${{ inputs.binary }}
+      run: |
+        llvm-readelf --file-header --program-headers --needed-libs "$BINARY"
+        llvm-readelf --file-header "$BINARY" | grep -q 'Machine:.*AArch64'
+        llvm-readelf --program-headers "$BINARY" | grep -q '/system/bin/linker64'
+
+    - name: Stage native package
+      shell: bash
+      env:
+        BINARY: ${{ inputs.binary }}
+      run: |
+        mkdir -p packages/ccusage-android-arm64/bin
+        cp "$BINARY" packages/ccusage-android-arm64/bin/ccusage
+        chmod 755 packages/ccusage-android-arm64/bin/ccusage
+
+    - name: Archive native package binary
+      shell: bash
+      run: tar -cf ccusage-native-android-arm64.tar packages/ccusage-android-arm64/bin
+
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: ccusage-native-android-arm64
+        path: ccusage-native-android-arm64.tar
+        if-no-files-found: error

@@ -1,0 +1,27 @@
+{
+	"name": "@ccusage/ccusage-android-arm64",
+	"version": "20.0.25",
+	"description": "Native ccusage binary for Android arm64",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ccusage/ccusage.git",
+		"directory": "packages/ccusage-android-arm64"
+	},
+	"files": [
+		"bin/ccusage"
+	],
+	"os": [
+		"android"
+	],
+	"cpu": [
+		"arm64"
+	],
+	"type": "commonjs",
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"prepack": "../../apps/ccusage/scripts/verify-native-package.nu && publint"
+	}
+}

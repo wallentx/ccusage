@@ -36,6 +36,25 @@ void describe(resolveCliRuntime.name, () => {
 		assert.equal(actual, 'C:\\native\\bin\\ccusage.exe');
 	});
 
+	void it('resolves the Android ARM64 native package', () => {
+		const actual = resolveNativeBinary({
+			arch: 'arm64',
+			platform: 'android',
+			resolvePath: (id) => {
+				assert.equal(id, '@ccusage/ccusage-android-arm64/bin/ccusage');
+				return '/native/android/bin/ccusage';
+			},
+		});
+
+		assert.equal(actual, '/native/android/bin/ccusage');
+	});
+
+	void it('does not resolve unsupported Android architectures to a Linux package', () => {
+		const resolvePath = mock.fn();
+		assert.equal(resolveNativeBinary({ arch: 'x64', platform: 'android', resolvePath }), undefined);
+		assert.equal(resolvePath.mock.callCount(), 0);
+	});
+
 	void it('prefers the matching native package binary when it is available', () => {
 		assert.deepEqual(
 			resolveCliRuntime({

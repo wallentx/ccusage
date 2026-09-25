@@ -1,0 +1,37 @@
+name: Android build check
+
+# Fork-only validation driver. The upstream CI and release matrices already
+# call the same composite action; omit this workflow from the upstream patch.
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/android-build.yaml
+      - .github/actions/build-android-native-package/**
+      - .github/actions/setup-native-build-cache/**
+      - .cargo/config.toml
+      - rust/**
+      - rust-toolchain.toml
+      - flake.lock
+      - package.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.repository == 'wallentx/ccusage'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/build-android-native-package
+        with:
+          binary: rust/target/aarch64-linux-android/release/ccusage
